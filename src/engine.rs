@@ -1,15 +1,16 @@
 use serde_yaml::{Value, Mapping};
 use std::fs;
 use crate::Errors;
+use crate::packages;
 
 
-pub fn install(usrrepo: String) {
+pub fn install(usrrepo: &str) {
     match usrrepo.split_once("/") {
         Some((user, repo)) => {
-            let user=user; let repo=repo;
+            let _user=user; let _repo=repo;
         },
         None => {
-            Errors::wformat_usrepo(usrrepo);
+            Errors::wformat_usrepo(usrrepo.to_string());
         }
     }
 }
@@ -22,10 +23,8 @@ fn vparse(map: Mapping, vals: &[&str], mandatory: bool) -> String {
             Value::Mapping(map) => match map.get(*vall) {
                 Some(v) => v,
                 None => {
-                    return {
-                        if mandatory {Errors::missing_field(path.to_string());}
-                        "null".to_string()
-                    };
+                    if mandatory {Errors::missing_field(path.to_string());}
+                    return "null".to_string()
                 }
             },
             _ => {
@@ -43,8 +42,40 @@ fn vparse(map: Mapping, vals: &[&str], mandatory: bool) -> String {
     }
 }
 
+fn mparse(map: Mapping, distro: String) -> Value {
+    if let Some(dependencies_value) = map.get(&Value::String("dependencies".to_string())) {
+        if let Some(os_value) = dependencies_value.get(&Value::String(distro.clone())) {
+            return os_value.clone();
+        } else {
+            return ybam();
+        }
+    } else {
+        return ybam();
+    }
+}
+
 fn ybas()->String {
     return String::from("null");
+}
+
+fn ybam()->Value{
+    return Value::Sequence(vec![]);
+}
+
+fn gld() -> String {
+    if let Ok(contents) = fs::read_to_string("/etc/os-release") {
+        for line in contents.lines() {
+            let parts: Vec<&str> = line.split('=').collect();
+            if parts.len() == 2 && parts[0] == "ID" {
+                return parts[1].trim_matches('"').to_string();
+            }
+        }
+    }
+    return "none".to_string();
+}
+
+fn cnv(values: &Vec<Value>) -> Vec<String> {
+    values.iter().map(|v| v.as_str().unwrap().to_string()).collect()
 }
 
 pub fn finstall() {
@@ -53,12 +84,20 @@ pub fn finstall() {
     
     let mut author=ybas();
     let mut repo  =ybas();
+    let mut deps  =ybam();
     if let Value::Mapping(map) = value {
         //author = vparse(&map["infoz"]["author"], "infoz->author");
-        author = vparse(map.clone(), &["info", "author"], true);
-        repo   = vparse(map.clone(), &["info", "repo"]  , false);
+        author = vparse(map.clone(), &["info", "author"]        , true );
+        repo   = vparse(map.clone(), &["info", "repo"]          , false);
+        deps   = mparse(map.clone(), gld());
     }
-
+    
+    if deps==ybam() {
+       Errors::missing_distro();
+    }
+    else {
+        packages::recognizer(gld(), cnv(deps.as_sequence().unwrap()));
+    }
     println!("{}", author);
     println!("{}", repo);
 }

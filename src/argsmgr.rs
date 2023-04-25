@@ -23,6 +23,9 @@ impl Parser {
                 }
             }
         }
+        else {
+            engine::install(&args[2]);
+        }
     }
 }
 

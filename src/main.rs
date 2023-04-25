@@ -4,6 +4,7 @@ mod err;
 use err::Errors;
 
 mod pre;
+mod packages;
 mod engine;
 
 mod argsmgr;

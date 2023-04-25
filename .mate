@@ -8,11 +8,9 @@ mapping:
 
 dependencies:
   arch:
-    community:
-      - alacritty
-      - i3-gaps
-    aur:
-      - picom-git
+    - alacritty
+    - i3-gaps
+    - picom-git
 
 warnings:
   polybar.conf: "at line 4 the path is set to /home/unity/. To fix set path to /home/username"

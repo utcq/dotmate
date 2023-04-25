@@ -34,4 +34,8 @@ impl Errors {
         println!("{} {} {}", "[ERR]".bold().red(), "Missing configuration field in .mate:".cyan().italic(), path.as_str().underline());
         exit(1);
     }
+
+    pub fn missing_distro() {
+        println!("{} {}", "[INFO]".bold().blue(), "Distro dependencies not found in .mate configuration".cyan().italic());
+    }
 }
